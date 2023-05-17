@@ -4,6 +4,7 @@
 #include <cstring>
 #include <vector>
 #include <conio.h>
+
 using namespace std;
 
 struct UserInput {
@@ -18,6 +19,7 @@ struct ProductInfo {
     char ProductUnit[500];
     long ProductCp;
     long ProductSp;
+    long Quantity;
 };
 
 class UserNotFoundException {
@@ -114,16 +116,18 @@ protected:
 
     void DisplayProducts() {
 
-        cout<< "\t__________________________________________________________________________________________\n";
-        cout << "\tS.N \t | Article No \t | Article Name \t | Unit \t | CP \t\t | SP \t | \n";
-        cout<< "\t__________________________________________________________________________________________\n";
+        cout << "\t_________________________________________________________________________________________________\n";
+        cout << "\tS.N\t| Article No\t| Article Name\t\t| Unit\t\t| CP\t| SP\t| Quantity\t|\n";
+        cout << "\t_________________________________________________________________________________________________\n";
         fstream file;
         ProductInfo productInfo{};
         file.open(ProductFileName, ios::in | ios::binary);
         int count = 0;
         while (file.read((char *) &productInfo, sizeof(ProductInfo))) {
-            cout << "\t" << ++count << "\t | " << productInfo.ArticleNo << "\t\t | " << productInfo.ArticleName << "\t\t | "
-            << productInfo.ProductUnit << "\t\t | " << productInfo.ProductCp << "\t\t | " << productInfo.ProductSp << "\t |";
+            cout << "\t" << ++count << "\t| " << productInfo.ArticleNo << "\t\t| " << productInfo.ArticleName
+                 << "\t\t\t| "
+                 << productInfo.ProductUnit << "\t\t| " << productInfo.ProductCp << "\t| " << productInfo.ProductSp
+                 << "\t| " << productInfo.Quantity << "\t\t|";
             cout << endl;
         }
 
@@ -149,6 +153,8 @@ protected:
         cin >> info.ProductCp;
         cout << "\t\tSales Rate:";
         cin >> info.ProductSp;
+        cout << "\t\tOpening Quantity:";
+        cin >> info.Quantity;
 
         productFile.write((char *) &info, sizeof(ProductInfo));
     }
@@ -166,25 +172,26 @@ protected:
         while (productFile.read((char *) &fileData, sizeof(ProductInfo))) {
             if (::strcmp(fileData.ArticleNo, pInfo.ArticleNo) == 0) {
                 found = true;
-                cout << "Article Id:" << fileData.ProductId << "\t";
-                cout << "Article Barcode (EAN/BC):" << fileData.Barcode << "\t";
-                cout << "Article No:" << fileData.ArticleNo << "\t\n";
-                cout << "Article Description:" << fileData.ArticleName << "\t";
-                cout << "Unit:" << fileData.ProductUnit << "\t";
-                cout << "Purchase Rate:" << fileData.ProductCp << "\t";
-                cout << "Sales Rate:" << fileData.ProductSp << "\t\n";
-                cout << "Enter Product Details to add a product\n";
-                cout<< "Barcode:";
+                cout << "\t\tArticle Information:\n";
+                cout << "\t\tArticle Id:" << fileData.ProductId << "\t";
+                cout << "\t\tArticle Barcode (EAN/BC):" << fileData.Barcode << "\t";
+                cout << "\t\tArticle No:" << fileData.ArticleNo << "\t\n";
+                cout << "\t\tArticle Description:" << fileData.ArticleName << "\t";
+                cout << "\t\tUnit:" << fileData.ProductUnit << "\t";
+                cout << "\t\tPurchase Rate:" << fileData.ProductCp << "\t";
+                cout << "\t\tSales Rate:" << fileData.ProductSp << "\t\n";
+                cout << "\t\tEnter Product Details to update the product\n";
+                cout << "\t\tBarcode:";
                 cin >> pInfo.Barcode;
-                cout<< "Article No:";
+                cout << "\t\tArticle No:";
                 cin >> pInfo.ArticleNo;
-                cout<< "Article Description:";
+                cout << "\t\tArticle Description:";
                 cin >> pInfo.ArticleName;
-                cout<< "Unit:";
+                cout << "\t\tUnit:";
                 cin >> pInfo.ProductUnit;
-                cout<< "Purchase Rate:";
+                cout << "\t\tPurchase Rate:";
                 cin >> pInfo.ProductCp;
-                cout<< "Sales Rate:";
+                cout << "\t\tSales Rate:";
                 cin >> pInfo.ProductSp;
                 tempFile.write((char *) &pInfo, sizeof(ProductInfo));
             } else {
@@ -217,7 +224,12 @@ protected:
             if (::strcmp(fileData.ArticleNo, pInfo.ArticleNo) != 0) {
                 tempFile.write((char *) &fileData, sizeof(ProductInfo));
             } else {
-                found = true;
+                if (fileData.Quantity > 0) {
+                    cout << "\tThe product you are trying to delete has quantity more than 0";
+                }
+                else {
+                    found = true;
+                }
             }
         }
         authFile.close();
