@@ -210,6 +210,42 @@ protected:
         }
     }
 
+    void FindProduct() {
+        ProductInfo pInfo, fileData;
+        bool found = false;
+        cout << "\t\tEnter the barcode of the article to filter:\t";
+        cin >> pInfo.Barcode;
+
+        fstream productFile, tempFile;
+
+        productFile.open(ProductFileName, ios::in | ios::binary);
+        tempFile.open("temp.dat", ios::out | ios::binary | ios::trunc);
+        while (productFile.read((char *) &fileData, sizeof(ProductInfo))) {
+            if (::strcmp(fileData.Barcode, pInfo.Barcode) == 0) {
+                found = true;
+                cout << "\t____________________________________________________________________________________________________\n";
+                cout << "\t| Barcode\t| Article No\t| Article Name\t\t| Unit\t\t| CP\t| SP\t| Quantity\t|\n";
+                cout << "\t____________________________________________________________________________________________________\n";
+                cout << "\t| " << fileData.Barcode << "\t\t| " << fileData.ArticleNo << "\t\t| " << fileData.ArticleName
+                     << "\t\t\t| "
+                     << fileData.ProductUnit << "\t\t| " << fileData.ProductCp << "\t| " << fileData.ProductSp
+                     << "\t| " << fileData.Quantity << "\t\t|";
+                cout << endl;
+                tempFile.write((char *) &pInfo, sizeof(ProductInfo));
+            } else {
+                tempFile.write((char *) &fileData, sizeof(ProductInfo));
+            }
+        }
+
+//        productFile.close();
+//        tempFile.close();
+//        ::remove(ProductFileName.c_str());
+//        ::rename("temp.dat", ProductFileName.c_str());
+        if (!found) {
+            cout << "\tNo matching Product found" << endl;
+        }
+    }
+
     void DeleteProduct() {
         ProductInfo pInfo, fileData;
         bool found = false;
@@ -256,6 +292,7 @@ public:
             cout << "\t\t2. View Product Report" << endl;
             cout << "\t\t3. Update Product" << endl;
             cout << "\t\t4. Delete Product" << endl;
+            cout << "\t\t5. Find Product" << endl;
 
             cout << "\t\tYour choice:";
             cin >> choice;
@@ -275,6 +312,10 @@ public:
                 }
                 case '4': {
                     DeleteProduct();
+                    break;
+                }
+                case '5': {
+                    FindProduct();
                     break;
                 }
                 default:
