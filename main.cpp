@@ -150,14 +150,15 @@ protected:
     void DisplayProducts() {
 
         cout << "\t_________________________________________________________________________________________________\n";
-        cout << "\tS.N\t| Article No\t| Article Name\t\t| Unit\t\t| CP\t| SP\t| Quantity\t|\n";
+        cout << "\tId\t| Article No\t| Article Name\t\t| Unit\t\t| CP\t| SP\t| Quantity\t|\n";
         cout << "\t_________________________________________________________________________________________________\n";
         fstream file;
         ProductInfo productInfo{};
         file.open(ProductFileName, ios::in | ios::binary);
         int count = 0;
         while (file.read((char *) &productInfo, sizeof(ProductInfo))) {
-            cout << "\t" << ++count << "\t| " << productInfo.ArticleNo << "\t\t| " << productInfo.ArticleName
+            cout << "\t" << productInfo.ProductId << "\t| " << productInfo.ArticleNo << "\t\t| "
+                 << productInfo.ArticleName
                  << "\t\t\t| "
                  << productInfo.ProductUnit << "\t\t| " << productInfo.ProductCp << "\t| " << productInfo.ProductSp
                  << "\t| " << productInfo.Quantity << "\t\t|";
@@ -265,7 +266,7 @@ protected:
         } else {
             cout << "\tNo matching Product found" << endl;
         }
-        LastPrompt("Article Updated");
+        LastPrompt("\t\tArticle Updated");
 
     }
 
@@ -281,18 +282,20 @@ protected:
             if (::strcmp(fileData.Barcode, pInfo.Barcode) == 0) {
                 found = true;
                 cout
-                        << "\t____________________________________________________________________________________________________\n";
-                cout << "\t| Barcode\t| Article No\t| Article Name\t\t| Unit\t\t| CP\t| SP\t| Quantity\t|\n";
+                        << "\t_________________________________________________________________________________________________________________\n";
+                cout << "\t| Id\t| Barcode\t| Article No\t| Article Name\t\t| Unit\t\t| CP\t| SP\t| Quantity\t|\n";
                 cout
-                        << "\t____________________________________________________________________________________________________\n";
-                cout << "\t| " << fileData.Barcode << "\t\t| " << fileData.ArticleNo << "\t\t| " << fileData.ArticleName
+                        << "\t_________________________________________________________________________________________________________________\n";
+                cout << "\t| " << fileData.ProductId << "\t| " << fileData.Barcode << "\t\t| " << fileData.ArticleNo
+                     << "\t\t| " << fileData.ArticleName
                      << "\t\t\t| "
                      << fileData.ProductUnit << "\t\t| " << fileData.ProductCp << "\t| " << fileData.ProductSp
                      << "\t| " << fileData.Quantity << "\t\t|";
                 cout << endl;
-            } else {
-                cout << "\tNo matching Product found" << endl;
             }
+        }
+        if (!found) {
+            cout << "\tNo matching Product found" << endl;
         }
 
         productFile.close();
@@ -418,10 +421,10 @@ public:
 
             char choice;
             cout << "\t\t1. Create Product" << endl;
-            cout << "\t\t2. View Product Report" << endl;
+            cout << "\t\t2. Find Product" << endl;
             cout << "\t\t3. Update Product" << endl;
             cout << "\t\t4. Delete Product" << endl;
-            cout << "\t\t5. Find Product" << endl;
+            cout << "\t\t5. View Product Report" << endl;
             cout << "\t\t6. Article IN" << endl;
             cout << "\t\t7. Article OUT" << endl;
             cout << "\t\t8. Exit" << endl;
@@ -435,7 +438,7 @@ public:
                     break;
                 }
                 case '2': {
-                    DisplayProducts();
+                    FindProduct();
                     break;
                 }
                 case '3': {
@@ -447,7 +450,7 @@ public:
                     break;
                 }
                 case '5': {
-                    FindProduct();
+                    DisplayProducts();
                     break;
                 }
                 case '6' : {
