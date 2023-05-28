@@ -2,8 +2,6 @@
 #include <fstream>
 #include <string>
 #include <cstring>
-#include <vector>
-#include <conio.h>
 
 using namespace std;
 
@@ -22,9 +20,35 @@ struct ProductInfo {
     long Quantity;
 };
 
-class UserNotFoundException {
-
+struct StockMovement {
+    long ProductId;
+    char ArticleNo[500];
+    char ArticleName[500];
+    char ProductUnit[500];
+    long Quantity;
+    long Rate;
+    char LogMode[50];
+    char Barcode[50];
 };
+
+struct StockMovementReturnDto {
+    long quantity;
+    long rate;
+};
+
+struct ArticleStartingNo {
+    long Id;
+};
+
+
+void AppHeader() {
+    cout << endl;
+    cout << "***********************************************************************************************" << endl;
+    cout << "******************************    STOCK MANAGEMENT SYSTEM    **********************************" << endl;
+    cout << "***********************************************************************************************" << endl;
+    cout << endl;
+}
+
 
 class Authentication {
     string authFileName = "auth.dat";
@@ -111,8 +135,17 @@ public:
 class Article {
 
     string ProductFileName = "Products.dat";
+    string MovementFileName = "stock_movement.dat";
+    string ArticleStartingNoFileName = "article_starting_no.dat";
 
 protected:
+
+    void LastPrompt(string message = "") {
+        char x[50];
+        cout << endl << message;
+        cout << endl << "Press any key to continue.";
+        cin >> x;
+    }
 
     void DisplayProducts() {
 
@@ -130,16 +163,38 @@ protected:
                  << "\t| " << productInfo.Quantity << "\t\t|";
             cout << endl;
         }
+        LastPrompt();
+    }
 
+    long GetNextProductId() {
+        ArticleStartingNo startingNo;
+        fstream articleStartingNoFile;
+        articleStartingNoFile.open(ArticleStartingNoFileName, ios::binary | ios::in);
+        long nextStartingNo = 1;
+        while (articleStartingNoFile.read((char *) &articleStartingNoFile, sizeof(ArticleStartingNo))) {
+            nextStartingNo = startingNo.Id + 1;
+            break;
+        }
+        articleStartingNoFile.close();
+        return nextStartingNo;
+    }
+
+    void IncrementProductId(long newId) {
+        ArticleStartingNo startingNo;
+        fstream articleStartingNoFile;
+        articleStartingNoFile.open(ArticleStartingNoFileName, ios::binary | ios::out);
+        startingNo.Id = newId;
+        articleStartingNoFile.write((char *) &startingNo, sizeof(ArticleStartingNo));
+        articleStartingNoFile.close();
     }
 
     void CreateProduct() {
         ProductInfo info, pInfo;
         fstream productFile;
+        fstream articleStartingNo;
         productFile.open(ProductFileName, ios::app | ios::binary);
-        cout << "\t\tEnter Product Details to add a product\n";
-        cout << "\t\tArticle Id:";
-        cin >> info.ProductId;
+        info.ProductId = GetNextProductId();
+        cout << "\t\tEnter Article Details: \n";
         cout << endl;
         cout << "\t\tArticle Barcode (EAN/BC):";
         cin >> info.Barcode;
@@ -157,6 +212,8 @@ protected:
         cin >> info.Quantity;
 
         productFile.write((char *) &info, sizeof(ProductInfo));
+        IncrementProductId(info.ProductId);
+        LastPrompt("Article Added");
     }
 
     void UpdateProduct() {
@@ -208,6 +265,8 @@ protected:
         } else {
             cout << "\tNo matching Product found" << endl;
         }
+        LastPrompt("Article Updated");
+
     }
 
     void FindProduct() {
@@ -215,35 +274,29 @@ protected:
         bool found = false;
         cout << "\t\tEnter the barcode of the article to filter:\t";
         cin >> pInfo.Barcode;
-
-        fstream productFile, tempFile;
+        fstream productFile;
 
         productFile.open(ProductFileName, ios::in | ios::binary);
-        tempFile.open("temp.dat", ios::out | ios::binary | ios::trunc);
         while (productFile.read((char *) &fileData, sizeof(ProductInfo))) {
             if (::strcmp(fileData.Barcode, pInfo.Barcode) == 0) {
                 found = true;
-                cout << "\t____________________________________________________________________________________________________\n";
+                cout
+                        << "\t____________________________________________________________________________________________________\n";
                 cout << "\t| Barcode\t| Article No\t| Article Name\t\t| Unit\t\t| CP\t| SP\t| Quantity\t|\n";
-                cout << "\t____________________________________________________________________________________________________\n";
+                cout
+                        << "\t____________________________________________________________________________________________________\n";
                 cout << "\t| " << fileData.Barcode << "\t\t| " << fileData.ArticleNo << "\t\t| " << fileData.ArticleName
                      << "\t\t\t| "
                      << fileData.ProductUnit << "\t\t| " << fileData.ProductCp << "\t| " << fileData.ProductSp
                      << "\t| " << fileData.Quantity << "\t\t|";
                 cout << endl;
-                tempFile.write((char *) &pInfo, sizeof(ProductInfo));
             } else {
-                tempFile.write((char *) &fileData, sizeof(ProductInfo));
+                cout << "\tNo matching Product found" << endl;
             }
         }
 
-//        productFile.close();
-//        tempFile.close();
-//        ::remove(ProductFileName.c_str());
-//        ::rename("temp.dat", ProductFileName.c_str());
-        if (!found) {
-            cout << "\tNo matching Product found" << endl;
-        }
+        productFile.close();
+        LastPrompt();
     }
 
     void DeleteProduct() {
@@ -262,8 +315,7 @@ protected:
             } else {
                 if (fileData.Quantity > 0) {
                     cout << "\tThe product you are trying to delete has quantity more than 0";
-                }
-                else {
+                } else {
                     found = true;
                 }
             }
@@ -277,22 +329,102 @@ protected:
         } else {
             cout << "\tNo matching product found";
         }
+        LastPrompt("Article Removed");
 
 
     }
 
+    void PerformArticleTransaction_UI(bool isOut) {
+        ProductInfo pInfo, fileData;
+        bool found = false;
+        cout << "\t\tEnter the barcode of the article:\t";
+        cin >> pInfo.Barcode;
+        fstream productFile;
+        fstream tempFile;
+
+        productFile.open(ProductFileName, ios::in | ios::binary);
+        tempFile.open("temp.dat", ios::out | ios::binary);
+        while (productFile.read((char *) &fileData, sizeof(ProductInfo))) {
+            if (::strcmp(fileData.Barcode, pInfo.Barcode) == 0) {
+                found = true;
+                cout
+                        << "\t____________________________________________________________________________________________________\n";
+                cout << "\t| Barcode\t| Article No\t| Article Name\t\t| Unit\t\t| CP\t| SP\t| Quantity\t|\n";
+                cout
+                        << "\t____________________________________________________________________________________________________\n";
+                cout << "\t| " << fileData.Barcode << "\t\t| " << fileData.ArticleNo << "\t\t| " << fileData.ArticleName
+                     << "\t\t\t| "
+                     << fileData.ProductUnit << "\t\t| " << fileData.ProductCp << "\t| " << fileData.ProductSp
+                     << "\t| " << fileData.Quantity << "\t\t|";
+                cout << endl;
+                StockMovementReturnDto dto = PerformArticleTransaction(false, fileData);
+                if (isOut) {
+                    fileData.Quantity -= dto.quantity;
+                    fileData.ProductSp = dto.rate;
+                } else {
+                    fileData.Quantity += dto.quantity;
+                    fileData.ProductCp = dto.rate;
+                }
+
+                tempFile.write((char *) &fileData, sizeof(ProductInfo));
+            } else {
+                tempFile.write((char *) &fileData, sizeof(ProductInfo));
+            }
+        }
+        tempFile.close();
+        productFile.close();
+        ::remove(ProductFileName.c_str());
+        ::rename("temp.dat", ProductFileName.c_str());
+
+        if (!found) {
+            LastPrompt("Article not found");
+        } else {
+            LastPrompt("Article Transaction Added");
+        }
+    }
+
+    StockMovementReturnDto PerformArticleTransaction(bool isOut, ProductInfo article) {
+        StockMovementReturnDto dto;
+        cout << "\t\t Quantity: \t";
+        cin >> dto.quantity;
+        cout << "\t\t Rate:\t";
+        cin >> dto.rate;
+        StockMovement movement;
+        fstream movementFile;
+        movementFile.open(MovementFileName, ios::binary | ios::app);
+        strcpy(movement.ArticleName, article.ArticleName);
+        strcpy(movement.ArticleNo, article.ArticleNo);
+        strcpy(movement.Barcode, article.Barcode);
+        movement.ProductId = article.ProductId;
+        if (isOut) {
+            ::strcpy(movement.LogMode, "OUT");
+        } else {
+            ::strcpy(movement.LogMode, "IN");
+        }
+        movement.Quantity = dto.quantity;
+        movement.Rate = dto.rate;
+        movementFile.write((char *) &movement, sizeof movement);
+        return dto;
+    }
+
 public:
+
+
     void Initialize() {
 
-
         while (true) {
-            char shouldContinue;
+            ::system("cls");
+            AppHeader();
+
             char choice;
             cout << "\t\t1. Create Product" << endl;
             cout << "\t\t2. View Product Report" << endl;
             cout << "\t\t3. Update Product" << endl;
             cout << "\t\t4. Delete Product" << endl;
             cout << "\t\t5. Find Product" << endl;
+            cout << "\t\t6. Article IN" << endl;
+            cout << "\t\t7. Article OUT" << endl;
+            cout << "\t\t8. Exit" << endl;
 
             cout << "\t\tYour choice:";
             cin >> choice;
@@ -318,23 +450,30 @@ public:
                     FindProduct();
                     break;
                 }
-                default:
+                case '6' : {
+                    PerformArticleTransaction_UI(false);
                     break;
+                }
+                case '7' : {
+                    PerformArticleTransaction_UI(true);
+                    break;
+                }
+                default: {
+                    cout << "Thank you for using Stock Management Software!!";
+                    std::exit(0);
+                }
             }
-            cout << endl << "Press Y/y to continue. Any other key to exit: \t";
-            cin >> shouldContinue;
-            if (shouldContinue != 'Y' && shouldContinue != 'y') {
-                break;
-            }
+//            cin >> shouldContinue;
+//            if (shouldContinue != 'Y' && shouldContinue != 'y') {
+//                break;
+//            }
         }
     }
 };
 
+
 int main() {
-    cout << "****************** * Shinoga Departmental Store * ******************\n";
-    cout << "\t\t\t\t-- Birtamode, Jhapa -- \n";
-    cout << "\n\t\tWELCOME TO SHINOGA DEPARTMENTAL STORE\n";
-//    cout<< "\t\t\tMain Menu\n";
+    AppHeader();
 
     Authentication auth;
     bool loginSuccess = auth.Initialize();
