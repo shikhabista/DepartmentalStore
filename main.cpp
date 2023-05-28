@@ -194,9 +194,10 @@ protected:
         fstream productFile;
         fstream articleStartingNo;
         productFile.open(ProductFileName, ios::app | ios::binary);
-        info.ProductId = GetNextProductId();
         cout << "\t\tEnter Article Details: \n";
         cout << endl;
+        cout << "\t\tEnter Article Id:";
+        cin >> info.ProductId;
         cout << "\t\tArticle Barcode (EAN/BC):";
         cin >> info.Barcode;
         cout << "\t\tArticle No:";
