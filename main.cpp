@@ -149,15 +149,15 @@ protected:
 
     void DisplayProducts() {
 
-        cout << "\t_________________________________________________________________________________________________\n";
-        cout << "\tId\t| Article No\t| Article Name\t\t| Unit\t\t| CP\t| SP\t| Quantity\t|\n";
-        cout << "\t_________________________________________________________________________________________________\n";
+        cout << "\t_________________________________________________________________________________________________________________________\n";
+        cout << "\tId\t| Barcode\t\t| Article No\t| Article Name\t\t| Unit\t\t| CP\t| SP\t| Quantity\t|\n";
+        cout << "\t_________________________________________________________________________________________________________________________\n";
         fstream file;
         ProductInfo productInfo{};
         file.open(ProductFileName, ios::in | ios::binary);
         int count = 0;
         while (file.read((char *) &productInfo, sizeof(ProductInfo))) {
-            cout << "\t" << productInfo.ProductId << "\t| " << productInfo.ArticleNo << "\t\t| "
+            cout << "\t" << productInfo.ProductId << "\t| " << productInfo.Barcode << "\t\t| " << productInfo.ArticleNo << "\t\t| "
                  << productInfo.ArticleName
                  << "\t\t\t| "
                  << productInfo.ProductUnit << "\t\t| " << productInfo.ProductCp << "\t| " << productInfo.ProductSp
@@ -172,7 +172,7 @@ protected:
         fstream articleStartingNoFile;
         articleStartingNoFile.open(ArticleStartingNoFileName, ios::binary | ios::in);
         long nextStartingNo = 1;
-        while (articleStartingNoFile.read((char *) &articleStartingNoFile, sizeof(ArticleStartingNo))) {
+        while (articleStartingNoFile.read((char *) &startingNo, sizeof(ArticleStartingNo))) {
             nextStartingNo = startingNo.Id + 1;
             break;
         }
@@ -183,7 +183,8 @@ protected:
     void IncrementProductId(long newId) {
         ArticleStartingNo startingNo;
         fstream articleStartingNoFile;
-        articleStartingNoFile.open(ArticleStartingNoFileName, ios::binary | ios::out);
+        ::remove(ArticleStartingNoFileName.c_str());
+        articleStartingNoFile.open(ArticleStartingNoFileName, ios::binary | ios::out | ios::trunc);
         startingNo.Id = newId;
         articleStartingNoFile.write((char *) &startingNo, sizeof(ArticleStartingNo));
         articleStartingNoFile.close();
@@ -194,10 +195,11 @@ protected:
         fstream productFile;
         fstream articleStartingNo;
         productFile.open(ProductFileName, ios::app | ios::binary);
+        info.ProductId = GetNextProductId();
         cout << "\t\tEnter Article Details: \n";
         cout << endl;
-        cout << "\t\tEnter Article Id:";
-        cin >> info.ProductId;
+//        cout << "\t\tEnter Article Id:";
+//        cin >> info.ProductId;
         cout << "\t\tArticle Barcode (EAN/BC):";
         cin >> info.Barcode;
         cout << "\t\tArticle No:";
@@ -252,6 +254,7 @@ protected:
                 cin >> pInfo.ProductCp;
                 cout << "\t\tSales Rate:";
                 cin >> pInfo.ProductSp;
+                pInfo.ProductId = fileData.ProductId;
                 tempFile.write((char *) &pInfo, sizeof(ProductInfo));
             } else {
                 tempFile.write((char *) &fileData, sizeof(ProductInfo));
@@ -317,10 +320,12 @@ protected:
             if (::strcmp(fileData.ArticleNo, pInfo.ArticleNo) != 0) {
                 tempFile.write((char *) &fileData, sizeof(ProductInfo));
             } else {
+                found = true;
                 if (fileData.Quantity > 0) {
+                    tempFile.write((char *) &fileData, sizeof(ProductInfo));
                     cout << "\tThe product you are trying to delete has quantity more than 0";
                 } else {
-                    found = true;
+                    cout << "\tArticle deleted" <<endl;
                 }
             }
         }
@@ -328,13 +333,14 @@ protected:
         tempFile.close();
         ::remove(ProductFileName.c_str());
         ::rename("temp.dat", ProductFileName.c_str());
-        if (found) {
-            cout << "\tProduct deleted successfully." << endl;
-        } else {
-            cout << "\tNo matching product found";
+        if (!found)
+        {
+            LastPrompt("\tNo matching product found");
         }
-        LastPrompt("Article Removed");
-
+        else
+        {
+            LastPrompt();
+        }
 
     }
 
