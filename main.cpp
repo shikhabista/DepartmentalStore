@@ -286,10 +286,10 @@ protected:
             if (::strcmp(fileData.Barcode, pInfo.Barcode) == 0) {
                 found = true;
                 cout
-                        << "\t_________________________________________________________________________________________________________________\n";
-                cout << "\t| Id\t| Barcode\t| Article No\t| Article Name\t\t| Unit\t\t| CP\t| SP\t| Quantity\t|\n";
+                        << "\t_________________________________________________________________________________________________________________________\n";
+                cout << "\t| Id\t| Barcode\t\t| Article No\t| Article Name\t\t| Unit\t\t| CP\t| SP\t| Quantity\t|\n";
                 cout
-                        << "\t_________________________________________________________________________________________________________________\n";
+                        << "\t_________________________________________________________________________________________________________________________\n";
                 cout << "\t| " << fileData.ProductId << "\t| " << fileData.Barcode << "\t\t| " << fileData.ArticleNo
                      << "\t\t| " << fileData.ArticleName
                      << "\t\t\t| "
